@@ -55,8 +55,7 @@ import org.springframework.util.StringUtils;
  * @author Matt King
  * @author Olga Maciaszek-Sharma
  */
-class FeignClientFactoryBean
-		implements FactoryBean<Object>, InitializingBean, ApplicationContextAware {
+class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, ApplicationContextAware {
 
 	/***********************************
 	 * WARNING! Nothing in this class should be @Autowired. It causes NPEs because of some
@@ -96,29 +95,23 @@ class FeignClientFactoryBean
 	protected Feign.Builder feign(FeignContext context) {
 		FeignLoggerFactory loggerFactory = get(context, FeignLoggerFactory.class);
 		Logger logger = loggerFactory.create(type);
-
 		// @formatter:off
-		Feign.Builder builder = get(context, Feign.Builder.class)
+		Feign.Builder builder = get(context, Feign.Builder.class) // 获取Feign.Builder
 				// required values
 				.logger(logger)
-				.encoder(get(context, Encoder.class))
-				.decoder(get(context, Decoder.class))
-				.contract(get(context, Contract.class));
+				.encoder(get(context, Encoder.class)) // Encoder
+				.decoder(get(context, Decoder.class)) // Decoder
+				.contract(get(context, Contract.class)); // Contract
 		// @formatter:on
-
 		configureFeign(context, builder);
-
 		return builder;
 	}
 
 	protected void configureFeign(FeignContext context, Feign.Builder builder) {
-		FeignClientProperties properties = applicationContext
-				.getBean(FeignClientProperties.class);
-
-		FeignClientConfigurer feignClientConfigurer = getOptional(context,
-				FeignClientConfigurer.class);
+		// 获取FeignClientProperties配置
+		FeignClientProperties properties = applicationContext.getBean(FeignClientProperties.class);
+		FeignClientConfigurer feignClientConfigurer = getOptional(context, FeignClientConfigurer.class);
 		setInheritParentContext(feignClientConfigurer.inheritParentConfiguration());
-
 		if (properties != null && inheritParentContext) {
 			if (properties.isDefaultToProperties()) {
 				configureUsingConfiguration(context, builder);
@@ -126,8 +119,7 @@ class FeignClientFactoryBean
 						properties.getConfig().get(properties.getDefaultConfig()),
 						builder);
 				configureUsingProperties(properties.getConfig().get(contextId), builder);
-			}
-			else {
+			} else {
 				configureUsingProperties(
 						properties.getConfig().get(properties.getDefaultConfig()),
 						builder);
@@ -140,8 +132,7 @@ class FeignClientFactoryBean
 		}
 	}
 
-	protected void configureUsingConfiguration(FeignContext context,
-			Feign.Builder builder) {
+	protected void configureUsingConfiguration(FeignContext context, Feign.Builder builder) {
 		Logger.Level level = getInheritedAwareOptional(context, Logger.Level.class);
 		if (level != null) {
 			builder.logLevel(level);
@@ -276,14 +267,12 @@ class FeignClientFactoryBean
 	protected <T> T getInheritedAwareOptional(FeignContext context, Class<T> type) {
 		if (inheritParentContext) {
 			return getOptional(context, type);
-		}
-		else {
+		} else {
 			return context.getInstanceWithoutAncestors(contextId, type);
 		}
 	}
 
-	protected <T> Map<String, T> getInheritedAwareInstances(FeignContext context,
-			Class<T> type) {
+	protected <T> Map<String, T> getInheritedAwareInstances(FeignContext context, Class<T> type) {
 		if (inheritParentContext) {
 			return context.getInstances(contextId, type);
 		}
@@ -316,9 +305,9 @@ class FeignClientFactoryBean
 	 * information
 	 */
 	<T> T getTarget() {
+		// 获取FeignContext
 		FeignContext context = applicationContext.getBean(FeignContext.class);
 		Feign.Builder builder = feign(context);
-
 		if (!StringUtils.hasText(url)) {
 			if (!name.startsWith("http")) {
 				url = "http://" + name;
@@ -348,9 +337,9 @@ class FeignClientFactoryBean
 			}
 			builder.client(client);
 		}
+		// Targeter
 		Targeter targeter = get(context, Targeter.class);
-		return (T) targeter.target(this, builder, context,
-				new HardCodedTarget<>(type, name, url));
+		return (T) targeter.target(this, builder, context, new HardCodedTarget<>(type, name, url));
 	}
 
 	private String cleanPath() {

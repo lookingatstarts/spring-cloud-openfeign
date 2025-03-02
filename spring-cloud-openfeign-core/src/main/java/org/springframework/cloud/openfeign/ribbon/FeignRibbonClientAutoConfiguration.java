@@ -38,16 +38,16 @@ import org.springframework.context.annotation.Primary;
 /**
  * Autoconfiguration to be activated if Feign is in use and needs to be use Ribbon as a
  * load balancer.
- *
+ * ribbon负载均衡
  * @author Dave Syer
  * @author Olga Maciaszek-Sharma
  */
-@ConditionalOnClass({ ILoadBalancer.class, Feign.class })
-@ConditionalOnProperty(value = "spring.cloud.loadbalancer.ribbon.enabled",
-		matchIfMissing = true)
+@ConditionalOnClass({ILoadBalancer.class, Feign.class })
+// 默认启用
+@ConditionalOnProperty(value = "spring.cloud.loadbalancer.ribbon.enabled", matchIfMissing = true)
 @Configuration(proxyBeanMethods = false)
 @AutoConfigureBefore(FeignAutoConfiguration.class)
-@EnableConfigurationProperties({ FeignHttpClientProperties.class })
+@EnableConfigurationProperties({FeignHttpClientProperties.class })
 // Order is important here, last should be the default, first should be optional
 // see
 // https://github.com/spring-cloud/spring-cloud-netflix/issues/2086#issuecomment-316281653

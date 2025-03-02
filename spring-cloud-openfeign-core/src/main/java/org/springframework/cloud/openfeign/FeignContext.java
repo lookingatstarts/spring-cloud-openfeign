@@ -27,6 +27,9 @@ import org.springframework.lang.Nullable;
  * A factory that creates instances of feign classes. It creates a Spring
  * ApplicationContext per client name, and extracts the beans that it needs from there.
  *
+ *
+ * 	feign子容器
+ *
  * @author Spencer Gibb
  * @author Dave Syer
  * @author Matt King

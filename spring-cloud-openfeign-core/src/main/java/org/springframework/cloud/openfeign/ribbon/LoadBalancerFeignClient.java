@@ -31,7 +31,7 @@ import org.springframework.cloud.netflix.ribbon.SpringClientFactory;
 
 /**
  * @author Dave Syer
- *
+ * client客户端
  */
 public class LoadBalancerFeignClient implements Client {
 

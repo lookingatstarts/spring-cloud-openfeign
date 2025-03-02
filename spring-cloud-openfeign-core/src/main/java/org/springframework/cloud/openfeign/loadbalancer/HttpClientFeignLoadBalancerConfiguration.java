@@ -46,10 +46,8 @@ class HttpClientFeignLoadBalancerConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
-	public Client feignClient(BlockingLoadBalancerClient loadBalancerClient,
-			HttpClient httpClient) {
+	public Client feignClient(BlockingLoadBalancerClient loadBalancerClient, HttpClient httpClient) {
 		ApacheHttpClient delegate = new ApacheHttpClient(httpClient);
 		return new FeignBlockingLoadBalancerClient(delegate, loadBalancerClient);
 	}
-
 }

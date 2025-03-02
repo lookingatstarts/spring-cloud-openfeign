@@ -22,6 +22,8 @@ import java.util.Objects;
 import org.springframework.cloud.context.named.NamedContextFactory;
 
 /**
+ * 当创建子容器时，如果容器的name匹配了Specification的name，
+ * 则会加载 Specification对应Configuration类，并将Configuration类里面标注@Bean的返回值注入到子容器中
  * @author Dave Syer
  * @author Gregor Zurowski
  */

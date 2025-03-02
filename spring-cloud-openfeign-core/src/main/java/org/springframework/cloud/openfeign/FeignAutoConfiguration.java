@@ -58,11 +58,13 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(Feign.class)
-@EnableConfigurationProperties({ FeignClientProperties.class,
-		FeignHttpClientProperties.class })
+@EnableConfigurationProperties({FeignClientProperties.class, FeignHttpClientProperties.class })
 @Import(DefaultGzipDecoderConfiguration.class)
 public class FeignAutoConfiguration {
 
+	/**
+	 * @see FeignClientsRegistrar
+	 */
 	@Autowired(required = false)
 	private List<FeignClientSpecification> configurations = new ArrayList<>();
 
@@ -71,6 +73,9 @@ public class FeignAutoConfiguration {
 		return HasFeatures.namedFeature("Feign", Feign.class);
 	}
 
+	/**
+	 * 子容器
+	 */
 	@Bean
 	public FeignContext feignContext() {
 		FeignContext context = new FeignContext();

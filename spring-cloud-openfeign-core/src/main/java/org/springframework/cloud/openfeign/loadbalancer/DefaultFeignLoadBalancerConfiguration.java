@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
+ * 默认的负载均衡
  * Configuration instantiating a {@link BlockingLoadBalancerClient}-based {@link Client}
  * object that uses {@link Client.Default} under the hood.
  *
@@ -39,5 +40,4 @@ class DefaultFeignLoadBalancerConfiguration {
 		return new FeignBlockingLoadBalancerClient(new Client.Default(null, null),
 				loadBalancerClient);
 	}
-
 }
