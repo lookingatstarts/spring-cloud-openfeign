@@ -88,7 +88,7 @@ public class FeignAutoConfiguration {
 	protected static class HystrixFeignTargeterConfiguration {
 
 		@Bean
-		@ConditionalOnMissingBean
+		@ConditionalOnMissingBean // hystrix实现方式
 		public Targeter feignTargeter() {
 			return new HystrixTargeter();
 		}
@@ -100,7 +100,7 @@ public class FeignAutoConfiguration {
 	protected static class DefaultFeignTargeterConfiguration {
 
 		@Bean
-		@ConditionalOnMissingBean
+		@ConditionalOnMissingBean // 默认实现
 		public Targeter feignTargeter() {
 			return new DefaultTargeter();
 		}
@@ -141,6 +141,7 @@ public class FeignAutoConfiguration {
 			this.connectionManagerTimer.schedule(new TimerTask() {
 				@Override
 				public void run() {
+					// 关闭无效连接
 					connectionManager.closeExpiredConnections();
 				}
 			}, 30000, httpClientProperties.getConnectionTimerRepeat());

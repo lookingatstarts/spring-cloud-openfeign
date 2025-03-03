@@ -38,7 +38,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Default configuration for {@link CloseableHttpClient}.
- *
+ * httpClient对feign自动配置
  * @author Ryan Baxter
  * @author Marcin Grzejszczak
  * @author Spencer Gibb
@@ -48,18 +48,20 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnMissingBean(CloseableHttpClient.class)
 public class HttpClientFeignConfiguration {
 
-	private final Timer connectionManagerTimer = new Timer(
-			"FeignApacheHttpClientConfiguration.connectionManagerTimer", true);
+	private final Timer connectionManagerTimer = new Timer("FeignApacheHttpClientConfiguration.connectionManagerTimer", true);
 
 	private CloseableHttpClient httpClient;
 
 	@Autowired(required = false)
 	private RegistryBuilder registryBuilder;
 
+	/**
+	 * http client连接管理器
+	 */
 	@Bean
 	@ConditionalOnMissingBean(HttpClientConnectionManager.class)
 	public HttpClientConnectionManager connectionManager(
-			ApacheHttpClientConnectionManagerFactory connectionManagerFactory,
+		ApacheHttpClientConnectionManagerFactory connectionManagerFactory,
 			FeignHttpClientProperties httpClientProperties) {
 		final HttpClientConnectionManager connectionManager = connectionManagerFactory
 				.newConnectionManager(httpClientProperties.isDisableSslValidation(),
@@ -77,8 +79,7 @@ public class HttpClientFeignConfiguration {
 	}
 
 	@Bean
-	@ConditionalOnProperty(value = "feign.compression.response.enabled",
-			havingValue = "true")
+	@ConditionalOnProperty(value = "feign.compression.response.enabled", havingValue = "true")
 	public CloseableHttpClient customHttpClient(
 			HttpClientConnectionManager httpClientConnectionManager,
 			FeignHttpClientProperties httpClientProperties) {
@@ -90,8 +91,7 @@ public class HttpClientFeignConfiguration {
 	}
 
 	@Bean
-	@ConditionalOnProperty(value = "feign.compression.response.enabled",
-			havingValue = "false", matchIfMissing = true)
+	@ConditionalOnProperty(value = "feign.compression.response.enabled", havingValue = "false", matchIfMissing = true)
 	public CloseableHttpClient httpClient(ApacheHttpClientFactory httpClientFactory,
 			HttpClientConnectionManager httpClientConnectionManager,
 			FeignHttpClientProperties httpClientProperties) {
@@ -100,6 +100,9 @@ public class HttpClientFeignConfiguration {
 		return this.httpClient;
 	}
 
+	/**
+	 * 创建连接池
+	 */
 	private CloseableHttpClient createClient(HttpClientBuilder builder,
 			HttpClientConnectionManager httpClientConnectionManager,
 			FeignHttpClientProperties httpClientProperties) {
@@ -119,5 +122,4 @@ public class HttpClientFeignConfiguration {
 			this.httpClient.close();
 		}
 	}
-
 }

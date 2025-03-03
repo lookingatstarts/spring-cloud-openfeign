@@ -44,6 +44,9 @@ import org.springframework.context.annotation.Import;
 @Import(HttpClientFeignConfiguration.class)
 class HttpClientFeignLoadBalancerConfiguration {
 
+	/**
+	 * http client使用的Client
+	 */
 	@Bean
 	@ConditionalOnMissingBean
 	public Client feignClient(BlockingLoadBalancerClient loadBalancerClient, HttpClient httpClient) {

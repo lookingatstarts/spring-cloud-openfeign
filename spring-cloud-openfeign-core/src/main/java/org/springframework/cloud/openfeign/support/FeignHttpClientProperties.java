@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
+ * http client配置
  * @author Ryan Baxter
  */
 @ConfigurationProperties(prefix = "feign.httpclient")
@@ -130,6 +131,7 @@ public class FeignHttpClientProperties {
 		this.timeToLiveUnit = timeToLiveUnit;
 	}
 
+	// 重定向
 	public boolean isFollowRedirects() {
 		return this.followRedirects;
 	}
@@ -138,6 +140,7 @@ public class FeignHttpClientProperties {
 		this.followRedirects = followRedirects;
 	}
 
+	// 连接超时
 	public int getConnectionTimeout() {
 		return this.connectionTimeout;
 	}

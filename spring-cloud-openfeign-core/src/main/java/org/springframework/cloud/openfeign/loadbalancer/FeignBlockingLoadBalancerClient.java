@@ -32,6 +32,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 
 /**
+ * 使用loadBalance负载均衡的client
+ *
  * A {@link Client} implementation that uses {@link BlockingLoadBalancerClient} to select
  * a {@link ServiceInstance} to use while resolving the request host.
  *
@@ -59,6 +61,7 @@ public class FeignBlockingLoadBalancerClient implements Client {
 		String serviceId = originalUri.getHost();
 		Assert.state(serviceId != null,
 				"Request URI does not contain a valid hostname: " + originalUri);
+		// 负载均衡
 		ServiceInstance instance = loadBalancerClient.choose(serviceId);
 		if (instance == null) {
 			String message = "Load balancer does not contain an instance for the service "

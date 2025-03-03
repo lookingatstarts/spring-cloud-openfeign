@@ -32,6 +32,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 /**
+ * 负载均衡自动配置
+ *
  * An autoconfiguration that instantiates {@link BlockingLoadBalancerClient}-based
  * implementations of {@link Client}. In order to use this load-balancing mechanism, the
  * Ribbon-based implementation has to be disabled by setting
@@ -43,6 +45,7 @@ import org.springframework.context.annotation.Import;
 @ConditionalOnClass(Feign.class)
 @ConditionalOnBean(BlockingLoadBalancerClient.class)
 @AutoConfigureBefore(FeignAutoConfiguration.class)
+// ribbon配置后配置
 @AutoConfigureAfter(FeignRibbonClientAutoConfiguration.class)
 @EnableConfigurationProperties(FeignHttpClientProperties.class)
 @Configuration(proxyBeanMethods = false)

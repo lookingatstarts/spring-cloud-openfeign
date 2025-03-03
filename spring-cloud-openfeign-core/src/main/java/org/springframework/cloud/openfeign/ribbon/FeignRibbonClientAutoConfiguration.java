@@ -43,9 +43,9 @@ import org.springframework.context.annotation.Primary;
  * @author Olga Maciaszek-Sharma
  */
 @ConditionalOnClass({ILoadBalancer.class, Feign.class })
-// 默认启用
 @ConditionalOnProperty(value = "spring.cloud.loadbalancer.ribbon.enabled", matchIfMissing = true)
 @Configuration(proxyBeanMethods = false)
+// 在feign自动配置之前
 @AutoConfigureBefore(FeignAutoConfiguration.class)
 @EnableConfigurationProperties({FeignHttpClientProperties.class })
 // Order is important here, last should be the default, first should be optional
