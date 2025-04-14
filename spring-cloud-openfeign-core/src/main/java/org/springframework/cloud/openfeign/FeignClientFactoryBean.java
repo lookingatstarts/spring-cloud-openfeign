@@ -48,6 +48,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
+ * FeignClient工厂bean
  * @author Spencer Gibb
  * @author Venil Noronha
  * @author Eko Kurniawan Khannedy
@@ -63,7 +64,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 	 ***********************************/
 
 	private Class<?> type;
-
+	// 服务名称 eg: http://trade-center
 	private String name;
 
 	private String url;
@@ -252,10 +253,10 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 	}
 
 	protected <T> T get(FeignContext context, Class<T> type) {
+		// 通过
 		T instance = context.getInstance(contextId, type);
 		if (instance == null) {
-			throw new IllegalStateException(
-					"No bean found of type " + type + " for " + contextId);
+			throw new IllegalStateException("No bean found of type " + type + " for " + contextId);
 		}
 		return instance;
 	}
@@ -289,11 +290,13 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 			Targeter targeter = get(context, Targeter.class);
 			return targeter.target(this, builder, context, target);
 		}
-
 		throw new IllegalStateException(
 				"No Feign Client for loadBalancing defined. Did you forget to include spring-cloud-starter-netflix-ribbon?");
 	}
 
+	/**
+	 * 创建Client对象
+	 */
 	@Override
 	public Object getObject() throws Exception {
 		return getTarget();
@@ -305,7 +308,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 	 * information
 	 */
 	<T> T getTarget() {
-		// 获取FeignContext
+		// 获取FeignContext子容器
 		FeignContext context = applicationContext.getBean(FeignContext.class);
 		Feign.Builder builder = feign(context);
 		if (!StringUtils.hasText(url)) {
@@ -316,8 +319,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 				url = name;
 			}
 			url += cleanPath();
-			return (T) loadBalance(builder, context,
-					new HardCodedTarget<>(type, name, url));
+			return (T) loadBalance(builder, context, new HardCodedTarget<>(type, name, url));
 		}
 		if (StringUtils.hasText(url) && !url.startsWith("http")) {
 			url = "http://" + url;
