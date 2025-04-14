@@ -34,6 +34,10 @@ class FeignClientSpecification implements NamedContextFactory.Specification {
 	FeignClientSpecification() {
 	}
 
+	/**
+	 * @param name 名称
+	 * @param configuration 对应的配置类
+	 */
 	FeignClientSpecification(String name, Class<?>[] configuration) {
 		this.name = name;
 		this.configuration = configuration;

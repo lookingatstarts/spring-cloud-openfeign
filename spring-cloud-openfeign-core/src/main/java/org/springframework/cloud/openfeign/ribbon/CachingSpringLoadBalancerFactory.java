@@ -39,7 +39,7 @@ public class CachingSpringLoadBalancerFactory {
 	protected final SpringClientFactory factory;
 
 	protected LoadBalancedRetryFactory loadBalancedRetryFactory = null;
-
+	// 缓存
 	private volatile Map<String, FeignLoadBalancer> cache = new ConcurrentReferenceHashMap<>();
 
 	public CachingSpringLoadBalancerFactory(SpringClientFactory factory) {
@@ -62,8 +62,7 @@ public class CachingSpringLoadBalancerFactory {
 		ServerIntrospector serverIntrospector = this.factory.getInstance(clientName,
 				ServerIntrospector.class);
 		client = this.loadBalancedRetryFactory != null
-				? new RetryableFeignLoadBalancer(lb, config, serverIntrospector,
-						this.loadBalancedRetryFactory)
+				? new RetryableFeignLoadBalancer(lb, config, serverIntrospector, this.loadBalancedRetryFactory)
 				: new FeignLoadBalancer(lb, config, serverIntrospector);
 		this.cache.put(clientName, client);
 		return client;

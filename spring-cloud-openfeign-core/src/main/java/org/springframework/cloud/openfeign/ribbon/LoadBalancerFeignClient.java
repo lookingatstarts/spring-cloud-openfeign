@@ -35,8 +35,9 @@ import org.springframework.cloud.netflix.ribbon.SpringClientFactory;
  */
 public class LoadBalancerFeignClient implements Client {
 
+	// 默认配置
 	static final Request.Options DEFAULT_OPTIONS = new Request.Options();
-
+	// 底层发送http请求的客户端
 	private final Client delegate;
 
 	private CachingSpringLoadBalancerFactory lbClientFactory;
@@ -72,15 +73,16 @@ public class LoadBalancerFeignClient implements Client {
 	@Override
 	public Response execute(Request request, Request.Options options) throws IOException {
 		try {
+			// 请求url
 			URI asUri = URI.create(request.url());
+			// 服务名称
 			String clientName = asUri.getHost();
+			// 去除主机的url
 			URI uriWithoutHost = cleanUrl(request.url(), clientName);
 			FeignLoadBalancer.RibbonRequest ribbonRequest = new FeignLoadBalancer.RibbonRequest(
 					this.delegate, request, uriWithoutHost);
-
 			IClientConfig requestConfig = getClientConfig(options, clientName);
-			return lbClient(clientName)
-					.executeWithLoadBalancer(ribbonRequest, requestConfig).toResponse();
+			return lbClient(clientName).executeWithLoadBalancer(ribbonRequest, requestConfig).toResponse();
 		}
 		catch (ClientException e) {
 			IOException io = findIOException(e);
@@ -116,6 +118,9 @@ public class LoadBalancerFeignClient implements Client {
 		return this.delegate;
 	}
 
+	/**
+	 * 通过服务名称查找负载均衡器
+	 */
 	private FeignLoadBalancer lbClient(String clientName) {
 		return this.lbClientFactory.create(clientName);
 	}

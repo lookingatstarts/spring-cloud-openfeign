@@ -77,16 +77,20 @@ public @interface FeignClient {
 	String qualifier() default "";
 
 	/**
+	 * 用于调试，指定client请求的地址，而非从服务中心获取
 	 * @return an absolute URL or resolvable hostname (the protocol is optional).
 	 */
 	String url() default "";
 
 	/**
+	 * 是否解码404错误
 	 * @return whether 404s should be decoded instead of throwing FeignExceptions
 	 */
 	boolean decode404() default false;
 
 	/**
+	 * 自定义类：用于定义Decoder Encoder LogLevel Contract等组件
+	 *
 	 * A custom configuration class for the feign client. Can contain override
 	 * <code>@Bean</code> definition for the pieces that make up the client, for instance
 	 * {@link feign.codec.Decoder}, {@link feign.codec.Encoder}, {@link feign.Contract}.
@@ -97,6 +101,8 @@ public @interface FeignClient {
 	Class<?>[] configuration() default {};
 
 	/**
+	 * fallback类
+	 *
 	 * Fallback class for the specified Feign client interface. The fallback class must
 	 * implement the interface annotated by this annotation and be a valid spring bean.
 	 * @return fallback class for the specified Feign client interface
@@ -114,6 +120,7 @@ public @interface FeignClient {
 	Class<?> fallbackFactory() default void.class;
 
 	/**
+	 * 定义client统一的请求前缀
 	 * @return path prefix to be used by all method-level mappings. Can be used with or
 	 * without <code>@RibbonClient</code>.
 	 */
