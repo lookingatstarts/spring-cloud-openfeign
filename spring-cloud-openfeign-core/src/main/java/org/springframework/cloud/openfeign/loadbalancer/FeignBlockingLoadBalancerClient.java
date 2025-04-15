@@ -33,6 +33,7 @@ import org.springframework.util.Assert;
 
 /**
  * 使用loadBalance负载均衡的client
+ * spring cloud 实现
  *
  * A {@link Client} implementation that uses {@link BlockingLoadBalancerClient} to select
  * a {@link ServiceInstance} to use while resolving the request host.
@@ -42,11 +43,10 @@ import org.springframework.util.Assert;
  */
 public class FeignBlockingLoadBalancerClient implements Client {
 
-	private static final Log LOG = LogFactory
-			.getLog(FeignBlockingLoadBalancerClient.class);
-
+	private static final Log LOG = LogFactory.getLog(FeignBlockingLoadBalancerClient.class);
+	// 底层真正发送http请求的客户端
 	private final Client delegate;
-
+	// 负载均衡器
 	private final BlockingLoadBalancerClient loadBalancerClient;
 
 	public FeignBlockingLoadBalancerClient(Client delegate,
@@ -58,23 +58,24 @@ public class FeignBlockingLoadBalancerClient implements Client {
 	@Override
 	public Response execute(Request request, Request.Options options) throws IOException {
 		final URI originalUri = URI.create(request.url());
+		// 服务名称，eg: hdl-trade-center
 		String serviceId = originalUri.getHost();
-		Assert.state(serviceId != null,
-				"Request URI does not contain a valid hostname: " + originalUri);
+		Assert.state(serviceId != null, "Request URI does not contain a valid hostname: " + originalUri);
 		// 负载均衡
 		ServiceInstance instance = loadBalancerClient.choose(serviceId);
 		if (instance == null) {
-			String message = "Load balancer does not contain an instance for the service "
-					+ serviceId;
+			String message = "Load balancer does not contain an instance for the service " + serviceId;
 			if (LOG.isWarnEnabled()) {
 				LOG.warn(message);
 			}
+			// 没有实例，返回服务不可用
 			return Response.builder().request(request)
 					.status(HttpStatus.SERVICE_UNAVAILABLE.value())
 					.body(message, StandardCharsets.UTF_8).build();
 		}
-		String reconstructedUrl = loadBalancerClient.reconstructURI(instance, originalUri)
-				.toString();
+		// 真正的请求地址
+		String reconstructedUrl = loadBalancerClient
+			.reconstructURI(instance, originalUri).toString();
 		Request newRequest = Request.create(request.httpMethod(), reconstructedUrl,
 				request.headers(), request.body(), request.charset(),
 				request.requestTemplate());

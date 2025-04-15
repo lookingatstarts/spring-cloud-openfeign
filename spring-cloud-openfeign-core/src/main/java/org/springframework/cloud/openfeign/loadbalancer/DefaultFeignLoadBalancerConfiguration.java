@@ -18,6 +18,7 @@ package org.springframework.cloud.openfeign.loadbalancer;
 
 import feign.Client;
 
+import feign.Client.Default;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cloud.loadbalancer.blocking.client.BlockingLoadBalancerClient;
 import org.springframework.context.annotation.Bean;
@@ -37,7 +38,7 @@ class DefaultFeignLoadBalancerConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public Client feignClient(BlockingLoadBalancerClient loadBalancerClient) {
-		return new FeignBlockingLoadBalancerClient(new Client.Default(null, null),
-				loadBalancerClient);
+		Default defaultClient = new Default(null, null);
+		return new FeignBlockingLoadBalancerClient(defaultClient, loadBalancerClient);
 	}
 }
