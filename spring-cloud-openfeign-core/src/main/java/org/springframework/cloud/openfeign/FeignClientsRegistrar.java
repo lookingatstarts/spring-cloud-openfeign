@@ -200,7 +200,8 @@ class FeignClientsRegistrar
 					Map<String, Object> attributes = annotationMetadata.getAnnotationAttributes(FeignClient.class.getCanonicalName());
 					// client名称：contextId,value,name,serviceIds顺序选择
 					String name = getClientName(attributes);
-					// 注册client私有的配置类
+					// 注册client私有的配置类：通过FeignClientSpecification，name=name.FeignClientSpecification
+					// configuration配置类中的组件归该client私有
 					registerClientConfiguration(registry, name, attributes.get("configuration"));
 					// 注册client
 					registerFeignClient(registry, annotationMetadata, attributes);
@@ -221,9 +222,10 @@ class FeignClientsRegistrar
 		validate(attributes);
 		definition.addPropertyValue("url", getUrl(attributes));
 		definition.addPropertyValue("path", getPath(attributes));
-		// 服务名称(applicationName)，拼接http://
+		// 服务名称
 		String name = getName(attributes);
 		definition.addPropertyValue("name", name);
+		// contextId，未设置则使用服务名称
 		String contextId = getContextId(attributes);
 		definition.addPropertyValue("contextId", contextId);
 		definition.addPropertyValue("type", className);
@@ -235,15 +237,16 @@ class FeignClientsRegistrar
 		String alias = contextId + "FeignClient";
 		AbstractBeanDefinition beanDefinition = definition.getBeanDefinition();
 		beanDefinition.setAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE, className);
-		// has a default, won't be null
 		boolean primary = (Boolean) attributes.get("primary");
 		beanDefinition.setPrimary(primary);
+		// 别名
 		String qualifier = getQualifier(attributes);
 		if (StringUtils.hasText(qualifier)) {
 			alias = qualifier;
 		}
+		// className作为bean名称
 		BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, className, new String[] { alias });
-		// 注册client
+		// 注册client： todo alias作用
 		BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
 	}
 

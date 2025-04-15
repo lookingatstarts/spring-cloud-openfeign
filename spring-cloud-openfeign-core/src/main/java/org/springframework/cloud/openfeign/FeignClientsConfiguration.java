@@ -161,6 +161,7 @@ public class FeignClientsConfiguration {
 		return new SortJacksonModule();
 	}
 
+
 	@Bean
 	@ConditionalOnMissingBean(FeignClientConfigurer.class)
 	public FeignClientConfigurer feignClientConfigurer() {

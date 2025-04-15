@@ -39,6 +39,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.cloud.openfeign.FeignClientProperties.FeignClientConfiguration;
 import org.springframework.cloud.openfeign.clientconfig.FeignClientConfigurer;
 import org.springframework.cloud.openfeign.loadbalancer.FeignBlockingLoadBalancerClient;
 import org.springframework.cloud.openfeign.ribbon.LoadBalancerFeignClient;
@@ -58,19 +59,14 @@ import org.springframework.util.StringUtils;
  */
 class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, ApplicationContextAware {
 
-	/***********************************
-	 * WARNING! Nothing in this class should be @Autowired. It causes NPEs because of some
-	 * lifecycle race condition.
-	 ***********************************/
-
 	private Class<?> type;
-	// 服务名称 eg: http://trade-center
+	// 服务名称
 	private String name;
-
+	// 指定的url，配置了就不走服务发现
 	private String url;
-
+	// contextId
 	private String contextId;
-
+	// 统一的请求前缀
 	private String path;
 
 	private boolean decode404;
@@ -93,6 +89,9 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		Assert.hasText(name, "Name must be set");
 	}
 
+	/**
+	 * 创建Builder：通过子容器可以为不同client配置不同的：Builder FeignLoggerFactory Encoder Decoder Contract
+	 */
 	protected Feign.Builder feign(FeignContext context) {
 		FeignLoggerFactory loggerFactory = get(context, FeignLoggerFactory.class);
 		Logger logger = loggerFactory.create(type);
@@ -113,22 +112,19 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		FeignClientProperties properties = applicationContext.getBean(FeignClientProperties.class);
 		FeignClientConfigurer feignClientConfigurer = getOptional(context, FeignClientConfigurer.class);
 		setInheritParentContext(feignClientConfigurer.inheritParentConfiguration());
-		if (properties != null && inheritParentContext) {
+		if (inheritParentContext) {
+			Map<String, FeignClientConfiguration> config = properties.getConfig();
+			String defaultConfig = properties.getDefaultConfig();
 			if (properties.isDefaultToProperties()) {
 				configureUsingConfiguration(context, builder);
-				configureUsingProperties(
-						properties.getConfig().get(properties.getDefaultConfig()),
-						builder);
-				configureUsingProperties(properties.getConfig().get(contextId), builder);
+				configureUsingProperties(config.get(defaultConfig), builder);
+				configureUsingProperties(config.get(contextId), builder);
 			} else {
-				configureUsingProperties(
-						properties.getConfig().get(properties.getDefaultConfig()),
-						builder);
-				configureUsingProperties(properties.getConfig().get(contextId), builder);
+				configureUsingProperties(config.get(defaultConfig), builder);
+				configureUsingProperties(config.get(contextId), builder);
 				configureUsingConfiguration(context, builder);
 			}
-		}
-		else {
+		} else {
 			configureUsingConfiguration(context, builder);
 		}
 	}
@@ -188,24 +184,19 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		if (config == null) {
 			return;
 		}
-
+		// 不为空则设置
 		if (config.getLoggerLevel() != null) {
 			builder.logLevel(config.getLoggerLevel());
 		}
-
-		connectTimeoutMillis = config.getConnectTimeout() != null
-				? config.getConnectTimeout() : connectTimeoutMillis;
-		readTimeoutMillis = config.getReadTimeout() != null ? config.getReadTimeout()
-				: readTimeoutMillis;
-
+		// 超时时间
+		connectTimeoutMillis = config.getConnectTimeout() != null ? config.getConnectTimeout() : connectTimeoutMillis;
+		readTimeoutMillis = config.getReadTimeout() != null ? config.getReadTimeout() : readTimeoutMillis;
 		builder.options(new Request.Options(connectTimeoutMillis, TimeUnit.MILLISECONDS,
 				readTimeoutMillis, TimeUnit.MILLISECONDS, true));
-
 		if (config.getRetryer() != null) {
 			Retryer retryer = getOrInstantiate(config.getRetryer());
 			builder.retryer(retryer);
 		}
-
 		if (config.getErrorDecoder() != null) {
 			ErrorDecoder errorDecoder = getOrInstantiate(config.getErrorDecoder());
 			builder.errorDecoder(errorDecoder);
@@ -248,12 +239,15 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 			return applicationContext.getBean(tClass);
 		}
 		catch (NoSuchBeanDefinitionException e) {
+			// 实例化一个对象
 			return BeanUtils.instantiateClass(tClass);
 		}
 	}
 
+	/**
+	 * 优先从子容器中获取，没有则从父容器中获取
+	 */
 	protected <T> T get(FeignContext context, Class<T> type) {
-		// 通过
 		T instance = context.getInstance(contextId, type);
 		if (instance == null) {
 			throw new IllegalStateException("No bean found of type " + type + " for " + contextId);
@@ -314,8 +308,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		if (!StringUtils.hasText(url)) {
 			if (!name.startsWith("http")) {
 				url = "http://" + name;
-			}
-			else {
+			} else {
 				url = name;
 			}
 			url += cleanPath();
