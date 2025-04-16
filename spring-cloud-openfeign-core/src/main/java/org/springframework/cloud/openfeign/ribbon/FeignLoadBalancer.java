@@ -47,6 +47,7 @@ import org.springframework.http.HttpRequest;
 import static org.springframework.cloud.netflix.ribbon.RibbonUtils.updateToSecureConnectionIfNeeded;
 
 /**
+ * Feign负载均衡器
  * @author Dave Syer
  * @author Spencer Gibb
  * @author Ryan Baxter
@@ -84,12 +85,13 @@ public class FeignLoadBalancer extends
 		Request.Options options;
 		if (configOverride != null) {
 			RibbonProperties override = RibbonProperties.from(configOverride);
-			options = new Request.Options(override.connectTimeout(this.connectTimeout),
-					override.readTimeout(this.readTimeout));
-		}
-		else {
+			int connectTimeout = override.connectTimeout(this.connectTimeout);
+			int readTimeout = override.readTimeout(this.readTimeout);
+			options = new Request.Options(connectTimeout,readTimeout);
+		} else {
 			options = new Request.Options(this.connectTimeout, this.readTimeout);
 		}
+		// 发送http请求
 		Response response = request.client().execute(request.toRequest(), options);
 		return new RibbonResponse(request.getUri(), response);
 	}
@@ -104,8 +106,7 @@ public class FeignLoadBalancer extends
 		if (!request.toRequest().httpMethod().name().equals("GET")) {
 			return new RequestSpecificRetryHandler(true, false, this.getRetryHandler(),
 					requestConfig);
-		}
-		else {
+		} else {
 			return new RequestSpecificRetryHandler(true, true, this.getRetryHandler(),
 					requestConfig);
 		}
@@ -119,20 +120,23 @@ public class FeignLoadBalancer extends
 	}
 
 	protected static class RibbonRequest extends ClientRequest implements Cloneable {
-
+		// feign请求
 		private final Request request;
-
+		// feign底层客户端
 		private final Client client;
 
 		protected RibbonRequest(Client client, Request request, URI uri) {
 			this.client = client;
+			// 不带域名的请求uri
 			setUri(uri);
 			this.request = toRequest(request);
 		}
 
+		/**
+		 * 重置uri
+		 */
 		private Request toRequest(Request request) {
-			Map<String, Collection<String>> headers = new LinkedHashMap<>(
-					request.headers());
+			Map<String, Collection<String>> headers = new LinkedHashMap<>(request.headers());
 			return Request.create(request.httpMethod(), getUri().toASCIIString(), headers,
 					request.body(), request.charset(), request.requestTemplate());
 		}
@@ -197,7 +201,6 @@ public class FeignLoadBalancer extends
 	protected static class RibbonResponse implements IResponse {
 
 		private final URI uri;
-
 		private final Response response;
 
 		protected RibbonResponse(URI uri, Response response) {
@@ -240,7 +243,5 @@ public class FeignLoadBalancer extends
 				this.response.body().close();
 			}
 		}
-
 	}
-
 }

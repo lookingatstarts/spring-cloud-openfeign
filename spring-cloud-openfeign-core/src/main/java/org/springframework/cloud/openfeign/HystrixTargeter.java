@@ -93,8 +93,7 @@ class HystrixTargeter implements Targeter {
 		return (T) fallbackInstance;
 	}
 
-	private <T> T getOptional(String feignClientName, FeignContext context,
-			Class<T> beanType) {
+	private <T> T getOptional(String feignClientName, FeignContext context, Class<T> beanType) {
 		return context.getInstance(feignClientName, beanType);
 	}
 

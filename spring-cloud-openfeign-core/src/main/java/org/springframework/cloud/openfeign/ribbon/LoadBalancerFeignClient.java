@@ -31,16 +31,14 @@ import org.springframework.cloud.netflix.ribbon.SpringClientFactory;
 
 /**
  * @author Dave Syer
- * client客户端
+ * ribbion负载均衡client
  */
 public class LoadBalancerFeignClient implements Client {
 
 	static final Request.Options DEFAULT_OPTIONS = new Request.Options();
-
+	// 被代理的Client
 	private final Client delegate;
-
 	private CachingSpringLoadBalancerFactory lbClientFactory;
-
 	private SpringClientFactory clientFactory;
 
 	public LoadBalancerFeignClient(Client delegate,
@@ -69,18 +67,24 @@ public class LoadBalancerFeignClient implements Client {
 		return URI.create(buffer.toString());
 	}
 
+	/**
+	 * 执行http请求
+	 */
 	@Override
 	public Response execute(Request request, Request.Options options) throws IOException {
 		try {
-			URI asUri = URI.create(request.url());
-			String clientName = asUri.getHost();
+			// 服务名称
+			String clientName = URI.create(request.url()).getHost();
+			// 去除服务名称的url
 			URI uriWithoutHost = cleanUrl(request.url(), clientName);
-			FeignLoadBalancer.RibbonRequest ribbonRequest = new FeignLoadBalancer.RibbonRequest(
-					this.delegate, request, uriWithoutHost);
-
+			// Request -> RibbonRequest 封装成ribbon请求
+			FeignLoadBalancer.RibbonRequest ribbonRequest = new FeignLoadBalancer
+				.RibbonRequest(this.delegate, request, uriWithoutHost);
+			// IClientConfig 获取配置
 			IClientConfig requestConfig = getClientConfig(options, clientName);
-			return lbClient(clientName)
-					.executeWithLoadBalancer(ribbonRequest, requestConfig).toResponse();
+			// Feign负载均衡器
+			FeignLoadBalancer feignLoadBalancer = lbClient(clientName);
+			return feignLoadBalancer.executeWithLoadBalancer(ribbonRequest, requestConfig).toResponse();
 		}
 		catch (ClientException e) {
 			IOException io = findIOException(e);
@@ -95,8 +99,7 @@ public class LoadBalancerFeignClient implements Client {
 		IClientConfig requestConfig;
 		if (options == DEFAULT_OPTIONS) {
 			requestConfig = this.clientFactory.getClientConfig(clientName);
-		}
-		else {
+		} else {
 			requestConfig = new FeignOptionsClientConfig(options);
 		}
 		return requestConfig;

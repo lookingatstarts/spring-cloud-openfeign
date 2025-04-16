@@ -72,6 +72,7 @@ public class HttpClientFeignConfiguration {
 		this.connectionManagerTimer.schedule(new TimerTask() {
 			@Override
 			public void run() {
+				// 关闭空闲连接
 				connectionManager.closeExpiredConnections();
 			}
 		}, 30000, httpClientProperties.getConnectionTimerRepeat());

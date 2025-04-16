@@ -55,5 +55,4 @@ public class DefaultGzipDecoderConfiguration {
 		return new OptionalDecoder(new ResponseEntityDecoder(
 				new DefaultGzipDecoder(new SpringDecoder(messageConverters))));
 	}
-
 }

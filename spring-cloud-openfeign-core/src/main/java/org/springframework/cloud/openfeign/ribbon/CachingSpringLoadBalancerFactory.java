@@ -40,6 +40,7 @@ public class CachingSpringLoadBalancerFactory {
 
 	protected LoadBalancedRetryFactory loadBalancedRetryFactory = null;
 
+	// key: 服务名称
 	private volatile Map<String, FeignLoadBalancer> cache = new ConcurrentReferenceHashMap<>();
 
 	public CachingSpringLoadBalancerFactory(SpringClientFactory factory) {
@@ -52,12 +53,17 @@ public class CachingSpringLoadBalancerFactory {
 		this.loadBalancedRetryFactory = loadBalancedRetryPolicyFactory;
 	}
 
+	/**
+	 * @param clientName 服务名称
+	 */
 	public FeignLoadBalancer create(String clientName) {
 		FeignLoadBalancer client = this.cache.get(clientName);
 		if (client != null) {
 			return client;
 		}
+		//
 		IClientConfig config = this.factory.getClientConfig(clientName);
+		//
 		ILoadBalancer lb = this.factory.getLoadBalancer(clientName);
 		ServerIntrospector serverIntrospector = this.factory.getInstance(clientName,
 				ServerIntrospector.class);

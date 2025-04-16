@@ -83,6 +83,9 @@ public class FeignAutoConfiguration {
 		return context;
 	}
 
+	/**
+	 * 如果存在HystrixFeign，则使用HystrixTargeter
+	 */
 	@Configuration(proxyBeanMethods = false)
 	@ConditionalOnClass(name = "feign.hystrix.HystrixFeign")
 	protected static class HystrixFeignTargeterConfiguration {
@@ -92,9 +95,11 @@ public class FeignAutoConfiguration {
 		public Targeter feignTargeter() {
 			return new HystrixTargeter();
 		}
-
 	}
 
+	/**
+	 * 使用默认DefaultTargeter
+	 */
 	@Configuration(proxyBeanMethods = false)
 	@ConditionalOnMissingClass("feign.hystrix.HystrixFeign")
 	protected static class DefaultFeignTargeterConfiguration {
@@ -104,13 +109,19 @@ public class FeignAutoConfiguration {
 		public Targeter feignTargeter() {
 			return new DefaultTargeter();
 		}
-
 	}
 
 	// the following configuration is for alternate feign clients if
 	// ribbon is not on the class path.
 	// see corresponding configurations in FeignRibbonClientAutoConfiguration
 	// for load balanced ribbon clients.
+	// 当没有引入ribbon时配置生效
+
+	/**
+	 * 1、feign.httpclient.enabled
+	 * 2、类路径上没有ribbon依赖
+	 * 3、没有配置CloseableHttpClient
+	 */
 	@Configuration(proxyBeanMethods = false)
 	@ConditionalOnClass(ApacheHttpClient.class)
 	@ConditionalOnMissingClass("com.netflix.loadbalancer.ILoadBalancer")
@@ -162,6 +173,9 @@ public class FeignAutoConfiguration {
 			return this.httpClient;
 		}
 
+		/**
+		 * 配置Client
+		 */
 		@Bean
 		@ConditionalOnMissingBean(Client.class)
 		public Client feignClient(HttpClient httpClient) {
@@ -175,9 +189,13 @@ public class FeignAutoConfiguration {
 				this.httpClient.close();
 			}
 		}
-
 	}
 
+	/**
+	 * 1、feign.okhttp.enabled
+	 * 2、类路径上没有ribbon依赖
+	 * 3、没有配置OkHttpClient
+	 */
 	@Configuration(proxyBeanMethods = false)
 	@ConditionalOnClass(OkHttpClient.class)
 	@ConditionalOnMissingClass("com.netflix.loadbalancer.ILoadBalancer")
@@ -225,7 +243,6 @@ public class FeignAutoConfiguration {
 		public Client feignClient(okhttp3.OkHttpClient client) {
 			return new OkHttpClient(client);
 		}
-
 	}
 
 }

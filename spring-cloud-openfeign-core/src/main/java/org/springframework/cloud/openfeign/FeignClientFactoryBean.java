@@ -112,6 +112,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		FeignClientProperties properties = applicationContext.getBean(FeignClientProperties.class);
 		FeignClientConfigurer feignClientConfigurer = getOptional(context, FeignClientConfigurer.class);
 		setInheritParentContext(feignClientConfigurer.inheritParentConfiguration());
+		// todo
 		if (inheritParentContext) {
 			Map<String, FeignClientConfiguration> config = properties.getConfig();
 			String defaultConfig = properties.getDefaultConfig();
@@ -276,6 +277,9 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		}
 	}
 
+	/**
+	 * 通过服务发现获取实例列表，负载均衡选择一条实例
+	 */
 	protected <T> T loadBalance(Feign.Builder builder, FeignContext context,
 			HardCodedTarget<T> target) {
 		Client client = getOptional(context, Client.class);
@@ -305,6 +309,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		// 获取FeignContext子容器
 		FeignContext context = applicationContext.getBean(FeignContext.class);
 		Feign.Builder builder = feign(context);
+		// 未配置url，走服务发现
 		if (!StringUtils.hasText(url)) {
 			if (!name.startsWith("http")) {
 				url = "http://" + name;
@@ -314,10 +319,12 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 			url += cleanPath();
 			return (T) loadBalance(builder, context, new HardCodedTarget<>(type, name, url));
 		}
+		// 指定了url
 		if (StringUtils.hasText(url) && !url.startsWith("http")) {
 			url = "http://" + url;
 		}
 		String url = this.url + cleanPath();
+		// 获取client，去除负载均衡
 		Client client = getOptional(context, Client.class);
 		if (client != null) {
 			if (client instanceof LoadBalancerFeignClient) {
@@ -332,7 +339,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 			}
 			builder.client(client);
 		}
-		// Targeter
+		// Targeter创建Client对象
 		Targeter targeter = get(context, Targeter.class);
 		return (T) targeter.target(this, builder, context, new HardCodedTarget<>(type, name, url));
 	}
