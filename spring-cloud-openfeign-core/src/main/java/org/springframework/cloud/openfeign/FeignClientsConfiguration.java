@@ -130,12 +130,18 @@ public class FeignClientsConfiguration {
 		return conversionService;
 	}
 
+	/**
+	 * 重试器
+	 */
 	@Bean
 	@ConditionalOnMissingBean
 	public Retryer feignRetryer() {
 		return Retryer.NEVER_RETRY;
 	}
 
+	/**
+	 * 获取Feign.Builder
+	 */
 	@Bean
 	@Scope("prototype")
 	@ConditionalOnMissingBean
@@ -143,6 +149,9 @@ public class FeignClientsConfiguration {
 		return Feign.builder().retryer(retryer);
 	}
 
+	/**
+	 * 日志工厂类
+	 */
 	@Bean
 	@ConditionalOnMissingBean(FeignLoggerFactory.class)
 	public FeignLoggerFactory feignLoggerFactory() {

@@ -54,7 +54,7 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * Feign客户端注入： FeignClientFactoryBean
+ * Feign客户端注入：api接口 -> FeignClientFactoryBean
  * @author Spencer Gibb
  * @author Jakub Narloch
  * @author Venil Noronha
@@ -141,6 +141,12 @@ class FeignClientsRegistrar
 		registerFeignClients(metadata, registry);
 	}
 
+	/**
+	 * 添加默认配置类
+	 *
+	 * 1、default.xxx 表示默认配置类
+	 *
+	 */
 	private void registerDefaultConfiguration(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
 		Map<String, Object> defaultAttrs = metadata.getAnnotationAttributes(EnableFeignClients.class.getName(), true);
 		if (defaultAttrs != null && defaultAttrs.containsKey("defaultConfiguration")) {
@@ -156,8 +162,7 @@ class FeignClientsRegistrar
 		}
 	}
 
-	public void registerFeignClients(AnnotationMetadata metadata,
-			BeanDefinitionRegistry registry) {
+	public void registerFeignClients(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
 		// 类路径扫描器
 		ClassPathScanningCandidateComponentProvider scanner = getScanner();
 		scanner.setResourceLoader(this.resourceLoader);
@@ -167,7 +172,7 @@ class FeignClientsRegistrar
 		Map<String, Object> attrs = metadata.getAnnotationAttributes(EnableFeignClients.class.getName());
 		AnnotationTypeFilter annotationTypeFilter = new AnnotationTypeFilter(FeignClient.class);
 		final Class<?>[] clients = attrs == null ? null : (Class<?>[]) attrs.get("clients");
-		if (clients == null || clients.length == 0) { // 为
+		if (clients == null || clients.length == 0) { // 未指定clients
 			scanner.addIncludeFilter(annotationTypeFilter);
 			basePackages = getBasePackages(metadata);
 		} else {
@@ -210,6 +215,9 @@ class FeignClientsRegistrar
 		}
 	}
 
+	/**
+	 * 注册FeignClientFactoryBean
+	 */
 	private void registerFeignClient(BeanDefinitionRegistry registry,
 			AnnotationMetadata annotationMetadata,
 		    Map<String, Object> attributes /*@FeignClient属性*/) {
@@ -218,9 +226,11 @@ class FeignClientsRegistrar
 		String className = annotationMetadata.getClassName();
 		// FeignClientFactoryBean工厂类
 		BeanDefinitionBuilder definition = BeanDefinitionBuilder.genericBeanDefinition(FeignClientFactoryBean.class);
-		// fallback fallbackFactory
+		// 校验fallback fallbackFactory
 		validate(attributes);
+		//  指定url，不走服务发现
 		definition.addPropertyValue("url", getUrl(attributes));
+		// 统一前缀
 		definition.addPropertyValue("path", getPath(attributes));
 		// 服务名称
 		String name = getName(attributes);
@@ -232,7 +242,7 @@ class FeignClientsRegistrar
 		definition.addPropertyValue("decode404", attributes.get("decode404"));
 		definition.addPropertyValue("fallback", attributes.get("fallback"));
 		definition.addPropertyValue("fallbackFactory", attributes.get("fallbackFactory"));
-		definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+		definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE); // 通过类型注入 todo
 		// 别名
 		String alias = contextId + "FeignClient";
 		AbstractBeanDefinition beanDefinition = definition.getBeanDefinition();
@@ -246,15 +256,15 @@ class FeignClientsRegistrar
 		}
 		// className作为bean名称
 		BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, className, new String[] { alias });
-		// 注册client： todo alias作用
+		// 注册client
 		BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
 	}
 
 	private void validate(Map<String, Object> attributes) {
 		AnnotationAttributes annotation = AnnotationAttributes.fromMap(attributes);
-		// This blows up if an aliased property is overspecified
-		// FIXME annotation.getAliasedString("name", FeignClient.class, null);
+		// fallback不能是interface
 		validateFallback(annotation.getClass("fallback"));
+		// fallbackFactory不能是interface
 		validateFallbackFactory(annotation.getClass("fallbackFactory"));
 	}
 

@@ -49,7 +49,9 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
- * FeignClient工厂bean
+ * FeignClient工厂bean，工厂设计模式
+ * 1、使用contextId作为NamedContextFactory的name,获取子容器
+ *
  * @author Spencer Gibb
  * @author Venil Noronha
  * @author Eko Kurniawan Khannedy
@@ -59,6 +61,7 @@ import org.springframework.util.StringUtils;
  */
 class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, ApplicationContextAware {
 
+	// feign api接口
 	private Class<?> type;
 	// 服务名称
 	private String name;
@@ -68,19 +71,12 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 	private String contextId;
 	// 统一的请求前缀
 	private String path;
-
 	private boolean decode404;
-
 	private boolean inheritParentContext = true;
-
 	private ApplicationContext applicationContext;
-
 	private Class<?> fallback = void.class;
-
 	private Class<?> fallbackFactory = void.class;
-
 	private int readTimeoutMillis = new Request.Options().readTimeoutMillis();
-
 	private int connectTimeoutMillis = new Request.Options().connectTimeoutMillis();
 
 	@Override
@@ -95,32 +91,36 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 	protected Feign.Builder feign(FeignContext context) {
 		FeignLoggerFactory loggerFactory = get(context, FeignLoggerFactory.class);
 		Logger logger = loggerFactory.create(type);
-		// @formatter:off
+		// 获取Builder，logger , Decoder Encoder Contract
 		Feign.Builder builder = get(context, Feign.Builder.class) // 获取Feign.Builder
-				// required values
 				.logger(logger)
 				.encoder(get(context, Encoder.class)) // Encoder
 				.decoder(get(context, Decoder.class)) // Decoder
 				.contract(get(context, Contract.class)); // Contract
-		// @formatter:on
 		configureFeign(context, builder);
 		return builder;
 	}
 
+	/**
+	 * 从容器中获取组件
+	 * // todo
+	 */
 	protected void configureFeign(FeignContext context, Feign.Builder builder) {
 		// 获取FeignClientProperties配置
 		FeignClientProperties properties = applicationContext.getBean(FeignClientProperties.class);
 		FeignClientConfigurer feignClientConfigurer = getOptional(context, FeignClientConfigurer.class);
+		// 是否集成父配置，默认为true
 		setInheritParentContext(feignClientConfigurer.inheritParentConfiguration());
-		// todo
 		if (inheritParentContext) {
+			// config.key: contextId
 			Map<String, FeignClientConfiguration> config = properties.getConfig();
 			String defaultConfig = properties.getDefaultConfig();
+			// 配置文件优选
 			if (properties.isDefaultToProperties()) {
 				configureUsingConfiguration(context, builder);
 				configureUsingProperties(config.get(defaultConfig), builder);
 				configureUsingProperties(config.get(contextId), builder);
-			} else {
+			} else { // 代码优先
 				configureUsingProperties(config.get(defaultConfig), builder);
 				configureUsingProperties(config.get(contextId), builder);
 				configureUsingConfiguration(context, builder);
@@ -152,8 +152,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 				builder.errorDecoder(factoryErrorDecoder);
 			}
 		}
-		Request.Options options = getInheritedAwareOptional(context,
-				Request.Options.class);
+		Request.Options options = getInheritedAwareOptional(context, Request.Options.class);
 		if (options != null) {
 			builder.options(options);
 			readTimeoutMillis = options.readTimeoutMillis();
@@ -256,9 +255,13 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		return instance;
 	}
 
+	/**
+	 * 允许返回null
+	 */
 	protected <T> T getOptional(FeignContext context, Class<T> type) {
 		return context.getInstance(contextId, type);
 	}
+
 
 	protected <T> T getInheritedAwareOptional(FeignContext context, Class<T> type) {
 		if (inheritParentContext) {
@@ -270,9 +273,10 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 
 	protected <T> Map<String, T> getInheritedAwareInstances(FeignContext context, Class<T> type) {
 		if (inheritParentContext) {
+			// BeanFactoryUtils.beansOfTypeIncludingAncestors
 			return context.getInstances(contextId, type);
-		}
-		else {
+		} else {
+			// 不继承父容器
 			return context.getInstancesWithoutAncestors(contextId, type);
 		}
 	}
@@ -301,13 +305,16 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 	}
 
 	/**
+	 * 1、负载均衡逻辑在client中
+	 *
 	 * @param <T> the target type of the Feign client
 	 * @return a {@link Feign} client created with the specified data and the context
 	 * information
 	 */
 	<T> T getTarget() {
-		// 获取FeignContext子容器
+		// 获取FeignContext容器，在通过name查找不同容器
 		FeignContext context = applicationContext.getBean(FeignContext.class);
+		// 构建好builder
 		Feign.Builder builder = feign(context);
 		// 未配置url，走服务发现
 		if (!StringUtils.hasText(url)) {
