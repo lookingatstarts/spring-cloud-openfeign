@@ -51,17 +51,17 @@ import org.springframework.context.annotation.Primary;
 // Order is important here, last should be the default, first should be optional
 // see
 // https://github.com/spring-cloud/spring-cloud-netflix/issues/2086#issuecomment-316281653
-@Import({ HttpClientFeignLoadBalancedConfiguration.class,
+@Import({HttpClientFeignLoadBalancedConfiguration.class,
 		OkHttpFeignLoadBalancedConfiguration.class,
 		DefaultFeignLoadBalancedConfiguration.class })
 public class FeignRibbonClientAutoConfiguration {
 
+	// SpringClientFactory ribbon的子容器
 	@Bean
 	@Primary
 	@ConditionalOnMissingBean
 	@ConditionalOnMissingClass("org.springframework.retry.support.RetryTemplate")
-	public CachingSpringLoadBalancerFactory cachingLBClientFactory(
-			SpringClientFactory factory) {
+	public CachingSpringLoadBalancerFactory cachingLBClientFactory(SpringClientFactory factory) {
 		return new CachingSpringLoadBalancerFactory(factory);
 	}
 
@@ -74,10 +74,12 @@ public class FeignRibbonClientAutoConfiguration {
 		return new CachingSpringLoadBalancerFactory(factory, retryFactory);
 	}
 
+	/**
+	 * 默认配置
+	 */
 	@Bean
 	@ConditionalOnMissingBean
 	public Request.Options feignRequestOptions() {
 		return LoadBalancerFeignClient.DEFAULT_OPTIONS;
 	}
-
 }

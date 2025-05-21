@@ -69,6 +69,7 @@ class FeignClientsRegistrar
 	FeignClientsRegistrar() {
 	}
 
+	// Feign接口必须有@FeignClient
 	static void validateFallback(final Class clazz) {
 		Assert.isTrue(!clazz.isInterface(),
 				"Fallback class must implement the interface annotated by @FeignClient");
@@ -148,9 +149,13 @@ class FeignClientsRegistrar
 	 *
 	 */
 	private void registerDefaultConfiguration(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
-		Map<String, Object> defaultAttrs = metadata.getAnnotationAttributes(EnableFeignClients.class.getName(), true);
+		// @EnableFeignClients注解的属性
+		Map<String, Object> defaultAttrs = metadata
+			.getAnnotationAttributes(EnableFeignClients.class.getName(), true);
+		// 注册默认配置类
 		if (defaultAttrs != null && defaultAttrs.containsKey("defaultConfiguration")) {
 			String name;
+			// 加载default前缀，标识是默认配置类
 			if (metadata.hasEnclosingClass()) {
 				name = "default." + metadata.getEnclosingClassName();
 			} else {
@@ -203,7 +208,7 @@ class FeignClientsRegistrar
 					Assert.isTrue(annotationMetadata.isInterface(), "@FeignClient can only be specified on an interface");
 					// 获取FeignClient上注解属性
 					Map<String, Object> attributes = annotationMetadata.getAnnotationAttributes(FeignClient.class.getCanonicalName());
-					// client名称：contextId,value,name,serviceIds顺序选择
+					// beanName：contextId,value,name,serviceIds顺序选择
 					String name = getClientName(attributes);
 					// 注册client私有的配置类：通过FeignClientSpecification，name=name.FeignClientSpecification
 					// configuration配置类中的组件归该client私有
@@ -217,14 +222,14 @@ class FeignClientsRegistrar
 
 	/**
 	 * 注册FeignClientFactoryBean
+	 * @param attributes @FeignClient属性
 	 */
 	private void registerFeignClient(BeanDefinitionRegistry registry,
-			AnnotationMetadata annotationMetadata,
-		    Map<String, Object> attributes /*@FeignClient属性*/) {
+			AnnotationMetadata annotationMetadata, Map<String, Object> attributes) {
 		// feign接口类(使用FeignClient)的类，
 		// eg: com.haidilao.trade.center.api.TradeCenterInvoiceApiV2
 		String className = annotationMetadata.getClassName();
-		// FeignClientFactoryBean工厂类
+		// FeignClientFactoryBean bean定义
 		BeanDefinitionBuilder definition = BeanDefinitionBuilder.genericBeanDefinition(FeignClientFactoryBean.class);
 		// 校验fallback fallbackFactory
 		validate(attributes);
@@ -242,7 +247,7 @@ class FeignClientsRegistrar
 		definition.addPropertyValue("decode404", attributes.get("decode404"));
 		definition.addPropertyValue("fallback", attributes.get("fallback"));
 		definition.addPropertyValue("fallbackFactory", attributes.get("fallbackFactory"));
-		definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE); // 通过类型注入 todo
+		definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE); // 通过类型注入
 		// 别名
 		String alias = contextId + "FeignClient";
 		AbstractBeanDefinition beanDefinition = definition.getBeanDefinition();
@@ -349,8 +354,7 @@ class FeignClientsRegistrar
 			basePackages.add(ClassUtils.getPackageName(clazz));
 		}
 		if (basePackages.isEmpty()) {
-			basePackages.add(
-					ClassUtils.getPackageName(importingClassMetadata.getClassName()));
+			basePackages.add(ClassUtils.getPackageName(importingClassMetadata.getClassName()));
 		}
 		return basePackages;
 	}
@@ -392,6 +396,7 @@ class FeignClientsRegistrar
 
 	/**
 	 * 注册client配置类
+	 * name不能重复
 	 */
 	private void registerClientConfiguration(BeanDefinitionRegistry registry, Object name, Object configuration) {
 		// FeignClientSpecification

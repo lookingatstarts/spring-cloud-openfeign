@@ -50,5 +50,4 @@ class OkHttpFeignLoadBalancerConfiguration {
 		OkHttpClient delegate = new OkHttpClient(okHttpClient);
 		return new FeignBlockingLoadBalancerClient(delegate, loadBalancerClient);
 	}
-
 }

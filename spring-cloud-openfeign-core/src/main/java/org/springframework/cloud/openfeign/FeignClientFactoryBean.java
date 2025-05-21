@@ -103,10 +103,9 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 
 	/**
 	 * 从容器中获取组件
-	 * // todo
 	 */
 	protected void configureFeign(FeignContext context, Feign.Builder builder) {
-		// 获取FeignClientProperties配置
+		// 获取FeignClientProperties配置，配置文件形式的配置
 		FeignClientProperties properties = applicationContext.getBean(FeignClientProperties.class);
 		FeignClientConfigurer feignClientConfigurer = getOptional(context, FeignClientConfigurer.class);
 		// 是否集成父配置，默认为true
@@ -118,7 +117,9 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 			// 配置文件优选
 			if (properties.isDefaultToProperties()) {
 				configureUsingConfiguration(context, builder);
+				// 默认配置
 				configureUsingProperties(config.get(defaultConfig), builder);
+				// contextId配置
 				configureUsingProperties(config.get(contextId), builder);
 			} else { // 代码优先
 				configureUsingProperties(config.get(defaultConfig), builder);
@@ -130,6 +131,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		}
 	}
 
+
 	protected void configureUsingConfiguration(FeignContext context, Feign.Builder builder) {
 		Logger.Level level = getInheritedAwareOptional(context, Logger.Level.class);
 		if (level != null) {
@@ -139,8 +141,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		if (retryer != null) {
 			builder.retryer(retryer);
 		}
-		ErrorDecoder errorDecoder = getInheritedAwareOptional(context,
-				ErrorDecoder.class);
+		ErrorDecoder errorDecoder = getInheritedAwareOptional(context, ErrorDecoder.class);
 		if (errorDecoder != null) {
 			builder.errorDecoder(errorDecoder);
 		}
@@ -178,9 +179,11 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		}
 	}
 
+	/**
+	 * 从配置文件中获取配置
+	 */
 	protected void configureUsingProperties(
-			FeignClientProperties.FeignClientConfiguration config,
-			Feign.Builder builder) {
+			FeignClientProperties.FeignClientConfiguration config, Feign.Builder builder) {
 		if (config == null) {
 			return;
 		}
@@ -201,7 +204,6 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 			ErrorDecoder errorDecoder = getOrInstantiate(config.getErrorDecoder());
 			builder.errorDecoder(errorDecoder);
 		}
-
 		if (config.getRequestInterceptors() != null
 				&& !config.getRequestInterceptors().isEmpty()) {
 			// this will add request interceptor to builder, not replace existing
@@ -210,30 +212,28 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 				builder.requestInterceptor(interceptor);
 			}
 		}
-
 		if (config.getDecode404() != null) {
 			if (config.getDecode404()) {
 				builder.decode404();
 			}
 		}
-
 		if (Objects.nonNull(config.getEncoder())) {
 			builder.encoder(getOrInstantiate(config.getEncoder()));
 		}
-
 		if (Objects.nonNull(config.getDecoder())) {
 			builder.decoder(getOrInstantiate(config.getDecoder()));
 		}
-
 		if (Objects.nonNull(config.getContract())) {
 			builder.contract(getOrInstantiate(config.getContract()));
 		}
-
 		if (Objects.nonNull(config.getExceptionPropagationPolicy())) {
 			builder.exceptionPropagationPolicy(config.getExceptionPropagationPolicy());
 		}
 	}
 
+	/**
+	 * 先从容器中获取，否则实例化一个对象
+	 */
 	private <T> T getOrInstantiate(Class<T> tClass) {
 		try {
 			return applicationContext.getBean(tClass);
@@ -259,6 +259,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 	 * 允许返回null
 	 */
 	protected <T> T getOptional(FeignContext context, Class<T> type) {
+		// 根据类型查找
 		return context.getInstance(contextId, type);
 	}
 
@@ -305,6 +306,8 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 	}
 
 	/**
+	 * 创建FeignClient代理类
+	 *
 	 * 1、负载均衡逻辑在client中
 	 *
 	 * @param <T> the target type of the Feign client
@@ -312,7 +315,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 	 * information
 	 */
 	<T> T getTarget() {
-		// 获取FeignContext容器，在通过name查找不同容器
+		// 获取FeignContext子容器
 		FeignContext context = applicationContext.getBean(FeignContext.class);
 		// 构建好builder
 		Feign.Builder builder = feign(context);
@@ -331,8 +334,9 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 			url = "http://" + url;
 		}
 		String url = this.url + cleanPath();
-		// 获取client，去除负载均衡
+		// client Targeter 两个组件比较特殊
 		Client client = getOptional(context, Client.class);
+		// 获取负载均衡client: LoadBalancerFeignClient FeignBlockingLoadBalancerClient中的代理client
 		if (client != null) {
 			if (client instanceof LoadBalancerFeignClient) {
 				// not load balancing because we have a url,
@@ -344,6 +348,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 				// but Spring Cloud LoadBalancer is on the classpath, so unwrap
 				client = ((FeignBlockingLoadBalancerClient) client).getDelegate();
 			}
+			// 修改
 			builder.client(client);
 		}
 		// Targeter创建Client对象

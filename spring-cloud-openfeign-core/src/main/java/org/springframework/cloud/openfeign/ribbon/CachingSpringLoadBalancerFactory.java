@@ -36,12 +36,12 @@ import org.springframework.util.ConcurrentReferenceHashMap;
  */
 public class CachingSpringLoadBalancerFactory {
 
+	// ribbon组件子容器
 	protected final SpringClientFactory factory;
-
+	// 允许为空
 	protected LoadBalancedRetryFactory loadBalancedRetryFactory = null;
-
-	// key: 服务名称
-	private volatile Map<String, FeignLoadBalancer> cache = new ConcurrentReferenceHashMap<>();
+	// key: 服务名称 缓存Feign的负载均衡器
+	private final Map<String, FeignLoadBalancer> cache = new ConcurrentReferenceHashMap<>();
 
 	public CachingSpringLoadBalancerFactory(SpringClientFactory factory) {
 		this.factory = factory;
@@ -61,18 +61,17 @@ public class CachingSpringLoadBalancerFactory {
 		if (client != null) {
 			return client;
 		}
-		//
+		// 获取客户端
 		IClientConfig config = this.factory.getClientConfig(clientName);
-		//
+		// 获取负载均衡器
 		ILoadBalancer lb = this.factory.getLoadBalancer(clientName);
-		ServerIntrospector serverIntrospector = this.factory.getInstance(clientName,
-				ServerIntrospector.class);
+		// ribbon服务实例信息
+		ServerIntrospector serverIntrospector = this.factory.getInstance(clientName, ServerIntrospector.class);
+		// 设置负载均衡器
 		client = this.loadBalancedRetryFactory != null
-				? new RetryableFeignLoadBalancer(lb, config, serverIntrospector,
-						this.loadBalancedRetryFactory)
+				? new RetryableFeignLoadBalancer(lb, config, serverIntrospector, this.loadBalancedRetryFactory)
 				: new FeignLoadBalancer(lb, config, serverIntrospector);
 		this.cache.put(clientName, client);
 		return client;
 	}
-
 }

@@ -103,7 +103,6 @@ public class FeignClientsConfiguration {
 			ObjectProvider<AbstractFormWriter> formWriterProvider) {
 		PageableSpringEncoder encoder = new PageableSpringEncoder(
 				springEncoder(formWriterProvider));
-
 		if (springDataWebProperties != null) {
 			encoder.setPageParameter(
 					springDataWebProperties.getPageable().getPageParameter());

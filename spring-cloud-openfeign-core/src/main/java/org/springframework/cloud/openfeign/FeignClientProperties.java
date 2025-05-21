@@ -42,6 +42,7 @@ public class FeignClientProperties {
 
 	private String defaultConfig = "default";
 
+	// map.key = @FeignClient.contextId
 	private Map<String, FeignClientConfiguration> config = new HashMap<>();
 
 	public boolean isDefaultToProperties() {
@@ -234,7 +235,5 @@ public class FeignClientProperties {
 					this.decode404, this.encoder, this.decoder, this.contract,
 					this.exceptionPropagationPolicy);
 		}
-
 	}
-
 }

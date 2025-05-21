@@ -35,6 +35,7 @@ import org.springframework.cloud.netflix.ribbon.SpringClientFactory;
  */
 public class LoadBalancerFeignClient implements Client {
 
+	// 10，60s
 	static final Request.Options DEFAULT_OPTIONS = new Request.Options();
 	// 被代理的Client
 	private final Client delegate;
@@ -84,9 +85,9 @@ public class LoadBalancerFeignClient implements Client {
 			IClientConfig requestConfig = getClientConfig(options, clientName);
 			// Feign负载均衡器
 			FeignLoadBalancer feignLoadBalancer = lbClient(clientName);
+			// 调用负载均衡 ribbonRequest内部有client委托对象，并传递配置对象
 			return feignLoadBalancer.executeWithLoadBalancer(ribbonRequest, requestConfig).toResponse();
-		}
-		catch (ClientException e) {
+		} catch (ClientException e) {
 			IOException io = findIOException(e);
 			if (io != null) {
 				throw io;
@@ -95,14 +96,13 @@ public class LoadBalancerFeignClient implements Client {
 		}
 	}
 
+	// 获取IClientConfig
 	IClientConfig getClientConfig(Request.Options options, String clientName) {
 		IClientConfig requestConfig;
 		if (options == DEFAULT_OPTIONS) {
-			requestConfig = this.clientFactory.getClientConfig(clientName);
-		} else {
-			requestConfig = new FeignOptionsClientConfig(options);
+			return this.clientFactory.getClientConfig(clientName);
 		}
-		return requestConfig;
+		return new FeignOptionsClientConfig(options);
 	}
 
 	protected IOException findIOException(Throwable t) {
@@ -126,8 +126,7 @@ public class LoadBalancerFeignClient implements Client {
 	static class FeignOptionsClientConfig extends DefaultClientConfigImpl {
 
 		FeignOptionsClientConfig(Request.Options options) {
-			setProperty(CommonClientConfigKey.ConnectTimeout,
-					options.connectTimeoutMillis());
+			setProperty(CommonClientConfigKey.ConnectTimeout, options.connectTimeoutMillis());
 			setProperty(CommonClientConfigKey.ReadTimeout, options.readTimeoutMillis());
 		}
 
@@ -140,7 +139,5 @@ public class LoadBalancerFeignClient implements Client {
 		public void loadDefaultValues() {
 
 		}
-
 	}
-
 }

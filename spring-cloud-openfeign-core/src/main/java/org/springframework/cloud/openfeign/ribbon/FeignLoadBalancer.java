@@ -34,6 +34,7 @@ import com.netflix.client.RetryHandler;
 import com.netflix.client.config.IClientConfig;
 import com.netflix.loadbalancer.ILoadBalancer;
 import com.netflix.loadbalancer.Server;
+import com.netflix.loadbalancer.ServerStats;
 import feign.Client;
 import feign.Request;
 import feign.Response;
@@ -58,13 +59,10 @@ public class FeignLoadBalancer extends
 		AbstractLoadBalancerAwareClient<FeignLoadBalancer.RibbonRequest, FeignLoadBalancer.RibbonResponse> {
 
 	private final RibbonProperties ribbon;
-
 	protected int connectTimeout;
-
 	protected int readTimeout;
-
+	// 配置
 	protected IClientConfig clientConfig;
-
 	protected ServerIntrospector serverIntrospector;
 
 	public FeignLoadBalancer(ILoadBalancer lb, IClientConfig clientConfig,
@@ -91,11 +89,14 @@ public class FeignLoadBalancer extends
 		} else {
 			options = new Request.Options(this.connectTimeout, this.readTimeout);
 		}
-		// 发送http请求
+		// 发送http请求(Client是委托的客户端)
 		Response response = request.client().execute(request.toRequest(), options);
 		return new RibbonResponse(request.getUri(), response);
 	}
 
+	/**
+	 * 构造RequestSpecificRetryHandler，重试策略
+	 */
 	@Override
 	public RequestSpecificRetryHandler getRequestSpecificRetryHandler(
 			RibbonRequest request, IClientConfig requestConfig) {
@@ -122,7 +123,7 @@ public class FeignLoadBalancer extends
 	protected static class RibbonRequest extends ClientRequest implements Cloneable {
 		// feign请求
 		private final Request request;
-		// feign底层客户端
+		// feign底层客户端: 真正发送http的客户端，eg: httpClient OkClient
 		private final Client client;
 
 		protected RibbonRequest(Client client, Request request, URI uri) {

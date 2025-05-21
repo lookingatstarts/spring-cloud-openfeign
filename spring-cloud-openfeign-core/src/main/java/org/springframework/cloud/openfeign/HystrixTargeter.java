@@ -53,7 +53,6 @@ class HystrixTargeter implements Targeter {
 			return targetWithFallbackFactory(name, context, target, builder,
 					fallbackFactory);
 		}
-
 		return feign.target(target);
 	}
 

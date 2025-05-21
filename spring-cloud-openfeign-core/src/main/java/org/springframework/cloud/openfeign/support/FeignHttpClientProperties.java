@@ -21,7 +21,8 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * http client配置
+ * http client相关配置
+ *
  * @author Ryan Baxter
  */
 @ConfigurationProperties(prefix = "feign.httpclient")

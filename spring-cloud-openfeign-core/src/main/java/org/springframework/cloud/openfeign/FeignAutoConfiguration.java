@@ -74,7 +74,7 @@ public class FeignAutoConfiguration {
 	}
 
 	/**
-	 * 子容器
+	 * 服务隔离的子容器，FeignClientsConfiguration默认配置类
 	 */
 	@Bean
 	public FeignContext feignContext() {
@@ -90,8 +90,9 @@ public class FeignAutoConfiguration {
 	@ConditionalOnClass(name = "feign.hystrix.HystrixFeign")
 	protected static class HystrixFeignTargeterConfiguration {
 
+		// hystrix实现方式
 		@Bean
-		@ConditionalOnMissingBean // hystrix实现方式
+		@ConditionalOnMissingBean
 		public Targeter feignTargeter() {
 			return new HystrixTargeter();
 		}
@@ -105,7 +106,7 @@ public class FeignAutoConfiguration {
 	protected static class DefaultFeignTargeterConfiguration {
 
 		@Bean
-		@ConditionalOnMissingBean // 默认实现
+		@ConditionalOnMissingBean
 		public Targeter feignTargeter() {
 			return new DefaultTargeter();
 		}
@@ -116,7 +117,6 @@ public class FeignAutoConfiguration {
 	// see corresponding configurations in FeignRibbonClientAutoConfiguration
 	// for load balanced ribbon clients.
 	// 当没有引入ribbon时配置生效
-
 	/**
 	 * 1、feign.httpclient.enabled
 	 * 2、类路径上没有ribbon依赖
@@ -129,8 +129,7 @@ public class FeignAutoConfiguration {
 	@ConditionalOnProperty(value = "feign.httpclient.enabled", matchIfMissing = true)
 	protected static class HttpClientFeignConfiguration {
 
-		private final Timer connectionManagerTimer = new Timer(
-				"FeignApacheHttpClientConfiguration.connectionManagerTimer", true);
+		private final Timer connectionManagerTimer = new Timer("FeignApacheHttpClientConfiguration.connectionManagerTimer", true);
 
 		@Autowired(required = false)
 		private RegistryBuilder registryBuilder;
@@ -244,5 +243,4 @@ public class FeignAutoConfiguration {
 			return new OkHttpClient(client);
 		}
 	}
-
 }
