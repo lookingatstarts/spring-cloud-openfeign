@@ -28,9 +28,8 @@ import org.springframework.cloud.context.named.NamedContextFactory;
  * @author Gregor Zurowski
  */
 class FeignClientSpecification implements NamedContextFactory.Specification {
-
+	// 获取bean时使用，用于区分不同的子容器
 	private String name;
-
 	private Class<?>[] configuration;
 
 	FeignClientSpecification() {

@@ -48,15 +48,14 @@ import org.springframework.http.HttpRequest;
 import static org.springframework.cloud.netflix.ribbon.RibbonUtils.updateToSecureConnectionIfNeeded;
 
 /**
- * Feign负载均衡器
+ * Feign ribbon负载均衡器
  * @author Dave Syer
  * @author Spencer Gibb
  * @author Ryan Baxter
  * @author Tim Ysewyn
  * @author Olga Maciaszek-Sharma
  */
-public class FeignLoadBalancer extends
-		AbstractLoadBalancerAwareClient<FeignLoadBalancer.RibbonRequest, FeignLoadBalancer.RibbonResponse> {
+public class FeignLoadBalancer extends AbstractLoadBalancerAwareClient<FeignLoadBalancer.RibbonRequest, FeignLoadBalancer.RibbonResponse> {
 
 	private final RibbonProperties ribbon;
 	protected int connectTimeout;
@@ -77,9 +76,11 @@ public class FeignLoadBalancer extends
 		this.serverIntrospector = serverIntrospector;
 	}
 
+	/**
+	 * 实现IClient方法，发送请求
+	 */
 	@Override
-	public RibbonResponse execute(RibbonRequest request, IClientConfig configOverride)
-			throws IOException {
+	public RibbonResponse execute(RibbonRequest request, IClientConfig configOverride) throws IOException {
 		Request.Options options;
 		if (configOverride != null) {
 			RibbonProperties override = RibbonProperties.from(configOverride);
@@ -100,14 +101,16 @@ public class FeignLoadBalancer extends
 	@Override
 	public RequestSpecificRetryHandler getRequestSpecificRetryHandler(
 			RibbonRequest request, IClientConfig requestConfig) {
+		// 所有错误都重试
 		if (this.ribbon.isOkToRetryOnAllOperations()) {
 			return new RequestSpecificRetryHandler(true, true, this.getRetryHandler(),
 					requestConfig);
 		}
+		// 非GET请求，连接错误时重试
 		if (!request.toRequest().httpMethod().name().equals("GET")) {
 			return new RequestSpecificRetryHandler(true, false, this.getRetryHandler(),
 					requestConfig);
-		} else {
+		} else {// GET请求，出错都重试
 			return new RequestSpecificRetryHandler(true, true, this.getRetryHandler(),
 					requestConfig);
 		}
@@ -196,7 +199,6 @@ public class FeignLoadBalancer extends
 		public Object clone() {
 			return new RibbonRequest(this.client, this.request, getUri());
 		}
-
 	}
 
 	protected static class RibbonResponse implements IResponse {

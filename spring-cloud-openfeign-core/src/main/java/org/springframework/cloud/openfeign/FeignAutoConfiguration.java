@@ -112,6 +112,7 @@ public class FeignAutoConfiguration {
 		}
 	}
 
+	// 当不存在ILoadBalancer时，才使用以下配置
 	// the following configuration is for alternate feign clients if
 	// ribbon is not on the class path.
 	// see corresponding configurations in FeignRibbonClientAutoConfiguration

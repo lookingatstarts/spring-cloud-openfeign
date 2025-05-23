@@ -109,10 +109,12 @@ public class HttpClientFeignConfiguration {
 			FeignHttpClientProperties httpClientProperties) {
 		RequestConfig defaultRequestConfig = RequestConfig.custom()
 				.setConnectTimeout(httpClientProperties.getConnectionTimeout())
-				.setRedirectsEnabled(httpClientProperties.isFollowRedirects()).build();
+				.setRedirectsEnabled(httpClientProperties.isFollowRedirects())
+			.build();
 		CloseableHttpClient httpClient = builder
 				.setDefaultRequestConfig(defaultRequestConfig)
-				.setConnectionManager(httpClientConnectionManager).build();
+				.setConnectionManager(httpClientConnectionManager)
+			.build();
 		return httpClient;
 	}
 

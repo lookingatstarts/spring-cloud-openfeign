@@ -42,7 +42,7 @@ import org.springframework.context.annotation.Primary;
  * @author Dave Syer
  * @author Olga Maciaszek-Sharma
  */
-@ConditionalOnClass({ILoadBalancer.class, Feign.class })
+@ConditionalOnClass({ILoadBalancer.class, Feign.class})
 @ConditionalOnProperty(value = "spring.cloud.loadbalancer.ribbon.enabled", matchIfMissing = true)
 @Configuration(proxyBeanMethods = false)
 // 在feign自动配置之前
@@ -57,6 +57,7 @@ import org.springframework.context.annotation.Primary;
 public class FeignRibbonClientAutoConfiguration {
 
 	// SpringClientFactory ribbon的子容器
+	// CachingSpringLoadBalancerFactory缓存FeignLoadBalancer反之重复创建对象
 	@Bean
 	@Primary
 	@ConditionalOnMissingBean

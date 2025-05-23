@@ -60,8 +60,7 @@ import org.springframework.util.StringUtils;
  * @author Venil Noronha
  * @author Gang Li
  */
-class FeignClientsRegistrar
-		implements ImportBeanDefinitionRegistrar, ResourceLoaderAware, EnvironmentAware {
+class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware, EnvironmentAware {
 
 	private ResourceLoader resourceLoader;
 	private Environment environment;
@@ -71,13 +70,12 @@ class FeignClientsRegistrar
 
 	// Feign接口必须有@FeignClient
 	static void validateFallback(final Class clazz) {
-		Assert.isTrue(!clazz.isInterface(),
-				"Fallback class must implement the interface annotated by @FeignClient");
+		Assert.isTrue(!clazz.isInterface(), "Fallback class must implement the interface annotated by @FeignClient");
 	}
 
 	static void validateFallbackFactory(final Class clazz) {
 		Assert.isTrue(!clazz.isInterface(), "Fallback factory must produce instances "
-				+ "of fallback classes that implement the interface annotated by @FeignClient");
+			+ "of fallback classes that implement the interface annotated by @FeignClient");
 	}
 
 	static String getName(String name) {
@@ -139,6 +137,7 @@ class FeignClientsRegistrar
 	public void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
 		// 注册默认配置类
 		registerDefaultConfiguration(metadata, registry);
+		// 扫描Feign api
 		registerFeignClients(metadata, registry);
 	}
 

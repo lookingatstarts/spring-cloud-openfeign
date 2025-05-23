@@ -25,6 +25,9 @@ import java.lang.annotation.Target;
 import org.springframework.context.annotation.Import;
 
 /**
+ * 指定api接口位置，以及默认配置类
+ * 将api封装FeignClientBeanFactory，api配置封装成FeignClientSpecification
+ *
  * Scans for interfaces that declare they are feign clients (via
  * {@link org.springframework.cloud.openfeign.FeignClient} <code>@FeignClient</code>).
  * Configures component scanning directives for use with
